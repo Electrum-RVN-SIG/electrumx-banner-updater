@@ -1,26 +1,26 @@
 #!/bin/bash
 
-# update electrumx banner to report bitcoin memory pool, fees, height and time since last block
+# update electrumx banner to report ravencoin memory pool, fees, height and time since last block
 # activate with cron job similar to this
 #*/2 * * * *  ~/bin/update-electrumx-banner
 
-# specify your bitcoin-cli location
-BITCOIN_CLI=/usr/bin/bitcoin-cli
+# specify your raven-cli location
+RAVENCOIN_CLI=~/raven/bin/raven-cli
 
-# specify your bitcoin data directory
-BITCOIN_DATADIR=~/.bitcoin
+# specify your ravencoin data directory
+RAVENCOIN_DATADIR=~/.raven
 
 # specify the location of your electrumx banner file
 # note: uses %{BANNER}.template as the template (top portion) of each banner update
-BANNER=~/.electrumx/banner
+BANNER=~/electrumx/banner
 
 # specify path to electrumx_rpc.py (.py removed as of 1.5)
-ELECTRUMX_RPC=/usr/local/bin/electrumx_rpc
+ELECTRUMX_RPC=~/electrumx/electrumx_rpc
 
 # specify electrumx RPC port
 RPC_PORT=8000
 
-TFILE=/tmp/update-electrumx-banner-$$
+TFILE=~/.tmp/update-electrumx-banner-$$
 
 # save initial banner as template for creation of new banners
 if [ ! -f ${BANNER}.template ]; then
@@ -43,11 +43,11 @@ echo "" >> ${BANNER}.new
 printf "As of %s " "$(date -u)" >> ${BANNER}.new
 
 # mempool
-MEMPOOL=`${BITCOIN_CLI} -datadir=${BITCOIN_DATADIR} getmempoolinfo | grep size | grep -o '[0-9\.]*'`
+MEMPOOL=`${RAVENCOIN_CLI} -datadir=${RAVENCOIN_DATADIR} getmempoolinfo | grep size | grep -o '[0-9\.]*'`
 printf "there are %'d transactions in the memory pool\n" ${MEMPOOL} >> ${BANNER}.new
 
 # report last block and current height from electrumx journal
-journalctl --since "6 hours ago" -u electrumx -o short-iso --utc | grep Prefetcher:new | tail -n 1 > ${TFILE}
+journalctl -q --since "6 hours ago" -u electrumx -o short-iso --utc | grep Prefetcher:new | tail -n 1 > ${TFILE}
 if [ `wc -c < ${TFILE}` -gt 10 ]; then
 	block_height=`< ${TFILE} awk '{print $7}'`
 	block_time=`< ${TFILE} awk '{print $1}'`
@@ -59,21 +59,21 @@ fi
 rm ${TFILE}
 
 # get exchange rate and average fee per satoshi
-USDPERBTC=`curl -m 10 -L -s 'https://blockchain.info/ticker' | python3 -c 'import sys, json; j=json.load(sys.stdin); print(j["USD"]["last"])'`
-TICKER=BTC
+USDPERRVN=`curl -m 10 -L -s 'https://api.coingecko.com/api/v3/simple/price?ids=ravencoin&vs_currencies=usd' | python3 -c 'import sys, json; j=json.load(sys.stdin); print(j["ravencoin"]["usd"])'`
+TICKER=RVN
 BYTESPERTX=168
-USDPERSAT=`echo ${USDPERBTC} | awk '{print $1/100000000}'`
+USDPERSAT=`echo ${USDPERRVN} | awk '{print $1/100000000}'`
 
-printf "Current exchange rate = %0.2f USD/%s; typical TX size = %d bytes\n" ${USDPERBTC} ${TICKER} ${BYTESPERTX} >> ${BANNER}.new
+printf "Current exchange rate = %0.2f USD/%s; typical TX size = %d bytes\n" ${USDPERRVN} ${TICKER} ${BYTESPERTX} >> ${BANNER}.new
 
 # report fees for various block times
 PREVSATPERBYTE=none
-for BLOCKS in 2 6 12 24 144 288 504 1008
+for BLOCKS in 1 2 5 10 20 50
 do
-	if [ ${TICKER} = BTC ]; then
-		FEERATE=`${BITCOIN_CLI} -datadir=${BITCOIN_DATADIR} estimatesmartfee ${BLOCKS} | grep feerate | grep -o '[0-9\.\-]*'`
+	if [ ${TICKER} = RVN ]; then
+		FEERATE=`${RAVENCOIN_CLI} -datadir=${RAVENCOIN_DATADIR} estimatesmartfee ${BLOCKS} | grep feerate | grep -o '[0-9\.\-]*'`
 	else
-		FEERATE=`${BITCOIN_CLI} -datadir=${BITCOIN_DATADIR} estimatefee ${BLOCKS}`
+		FEERATE=`${RAVENCOIN_CLI} -datadir=${RAVENCOIN_DATADIR} estimatefee ${BLOCKS}`
 	fi
 
 	SATPERBYTE=`echo ${FEERATE} | awk '{print $1*100000}'`
@@ -82,7 +82,7 @@ do
 	fi
 
 	if [ ${SATPERBYTE} != ${PREVSATPERBYTE} ]; then
-		echo ${BLOCKS} ${SATPERBYTE} ${BYTESPERTX} ${USDPERSAT} | awk '{printf "Estimated miner fee for confirmation in %d blocks (%s hours) = %0.1f sat/B (%0.1f sat or $%0.3f)\n", $1, int($1/0.06)/100, $2, $2*$3, $2*$3*$4 }' >> ${BANNER}.new
+		echo ${BLOCKS} ${SATPERBYTE} ${BYTESPERTX} ${USDPERSAT} | awk '{printf "Estimated miner fee for confirmation in %d blocks (%s minutes) = %0.1f sat/B (%0.1f sat or $%0.3f)\n", $1, $1, $2, $2*$3, $2*$3*$4 }' >> ${BANNER}.new
 		PREVSATPERBYTE=${SATPERBYTE}
 	fi
 done
