@@ -5,10 +5,10 @@ ElectrumX Banner Updater
 This script can be used to update the ElectrumX banner file to contain information about memory pool and fees.
 
 ElectrumX server: 
-    https://github.com/kyuupichan/electrumx
+    https://github.com/Electrum-RVN-SIG/electrumx-ravencoin
     
 Bitcoin Core daemon:
-    https://github.com/bitcoin/bitcoin
+    https://github.com/RavenProject/Ravencoin
 
 
 Getting Started
@@ -24,9 +24,9 @@ If you wish to change your banner you should edit ``${BANNER}.template``.
 Edit update-electrumx-banner:
 *****************************
 
-- Adjust the ``BITCOIN_DATADIR`` environment to specify where to find your bitcoin data directory.
+- Adjust the ``RAVENCOIN_DATADIR`` environment to specify where to find your ravencoin data directory.
 
-- Adjust the ``BITCOIN_CLI`` environment to specify where to find bitcoin-cli.
+- Adjust the ``RAVENCOIN_CLI`` environment to specify where to find raven-cli.
 
 - Adjust the ``BANNER`` environment to specify the your electrumx banner file.
 
@@ -46,17 +46,9 @@ Versions
 
 This script is working with the following software versions::
 
- Operating System:   Ubuntu 18.04
- ElectrumX:          1.11.0
- Bitcoin Core:       0.17.1
- Bitcoin ABC:        0.18.4
- Bitcoin SV:         0.10.0
- 
-Live Example
-------------
-
-You can see an example here: 
-    http://vps.hsmiths.com:49001/banner
+ Operating System:   Ubuntu 20.10
+ ElectrumX Ravencoin:1.8.0
+ Ravencoin Core:     4.3.2.1
 
 
 =======================================================
