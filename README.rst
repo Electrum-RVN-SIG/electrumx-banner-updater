@@ -7,7 +7,7 @@ This script can be used to update the ElectrumX banner file to contain informati
 ElectrumX server: 
     https://github.com/Electrum-RVN-SIG/electrumx-ravencoin
     
-Bitcoin Core daemon:
+Ravencoin Core daemon:
     https://github.com/RavenProject/Ravencoin
 
 
